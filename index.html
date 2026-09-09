@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>학교 수칙 - 복장 감시 시스템</title>
 
-  <!-- 오싹한 느낌의 폰트 (East Sea Dokdo & Noto Serif KR) -->
+  <!-- 웹 폰트 (Creepster & Noto Serif KR) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=East+Sea+Dokdo&family=Noto+Serif+KR:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Noto+Serif+KR:wght@400;700;900&display=swap" rel="stylesheet">
 
   <!-- TensorFlow.js 및 Teachable Machine Image 라이브러리 -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
@@ -43,19 +43,19 @@
       overflow-x: hidden;
     }
 
-    /* 지지직거리는 스캔라인/노이즈 오버레이 */
+    /* 화면 스캔라인 / 비디오 노이즈 효과 */
     body::before {
       content: " ";
       display: block;
       position: fixed;
       top: 0; left: 0; bottom: 0; right: 0;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
       z-index: 100;
       background-size: 100% 3px, 6px 100%;
       pointer-events: none;
     }
 
-    /* 메인 컨테이너 */
+    /* 포스터 컨테이너 */
     .poster-container {
       position: relative;
       width: 100%;
@@ -66,9 +66,17 @@
       box-shadow: 0 0 30px rgba(0, 229, 255, 0.1), inset 0 0 15px rgba(0, 0, 0, 0.8);
       border: 1px solid var(--border-color);
       overflow: hidden;
+      transition: border-color 0.3s;
     }
 
-    /* OIP.webp 원본 비율 배경 워터마크 */
+    /* 체육복 감지 시 전체 지지직거리는 괴담 연출 클래스 */
+    .poster-container.glitch-mode {
+      animation: global-glitch 0.15s infinite alternate;
+      border-color: var(--text-red);
+      box-shadow: 0 0 40px rgba(255, 51, 51, 0.4);
+    }
+
+    /* OIP.webp 원본 배경 워터마크 */
     .poster-container::before {
       content: "";
       position: absolute;
@@ -91,26 +99,33 @@
       z-index: 1;
     }
 
-    /* 상단 타임코드 & 슬로건 */
+    /* 좌측 상단 REC 타임코드 */
     .time-code {
       font-family: monospace;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       color: var(--blue-glow);
       letter-spacing: 2px;
       margin-bottom: 5px;
       text-shadow: 0 0 5px var(--blue-glow);
+      transition: color 0.3s;
     }
 
+    .time-code.cursed {
+      color: var(--text-red) !important;
+      text-shadow: 0 0 8px var(--text-red) !important;
+      animation: blink 0.5s infinite alternate;
+    }
+
+    /* 메인 타이틀 (Creepster 폰트 적용) */
     .top-slogan {
-      font-family: 'East Sea Dokdo', cursive;
-      font-size: 3.8rem;
+      font-family: 'Creepster', cursive;
+      font-size: 3.2rem;
       text-align: center;
       color: #ffffff;
-      letter-spacing: 3px;
-      text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 2px 2px 0px var(--text-red);
+      letter-spacing: 4px;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.6), 3px 3px 0px var(--text-red);
       margin-bottom: 2px;
-      line-height: 1.1;
-      animation: glitch-anim 3s infinite alternate;
+      line-height: 1.2;
     }
 
     header {
@@ -127,7 +142,6 @@
       letter-spacing: 1px;
     }
 
-    /* 2열 레이아웃 */
     .main-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -135,7 +149,7 @@
       align-items: start;
     }
 
-    /* 나폴리탄 괴담 스타일 수칙 서식 */
+    /* 나폴리탄 괴담 정보창 */
     .info-box {
       background: rgba(5, 10, 18, 0.8);
       border: 1px solid var(--border-color);
@@ -173,7 +187,7 @@
       color: #d1a3a3;
     }
 
-    /* 버튼 스타일 */
+    /* 컨트롤 버튼 */
     .controls {
       display: flex;
       gap: 10px;
@@ -232,7 +246,7 @@
       display: none;
     }
 
-    /* CCTV 감시 화면 노이즈 효과 */
+    /* 웹캠 감시 박스 */
     .webcam-container {
       position: relative;
       width: 100%;
@@ -253,9 +267,14 @@
       height: 100% !important;
       object-fit: cover;
       filter: contrast(110%) brightness(90%) hue-rotate(180deg) invert(10%);
+      transition: filter 0.2s;
     }
 
-    /* 결과 박스 */
+    /* 체육복 식별 시 카메라 암전 효과 */
+    .webcam-container.blackout canvas {
+      display: none !important;
+    }
+
     .results-container {
       background: rgba(5, 10, 18, 0.9);
       padding: 14px;
@@ -289,7 +308,6 @@
       margin-top: 2px;
     }
 
-    /* 프로그레스 바 */
     .label-container {
       display: flex;
       flex-direction: column;
@@ -333,14 +351,19 @@
       margin-top: 24px;
     }
 
-    /* 화면 글리치 애니메이션 */
-    @keyframes glitch-anim {
-      0% { text-shadow: 2px 2px 0px var(--text-red), -2px -2px 0px var(--blue-glow); }
-      95% { text-shadow: 2px 2px 0px var(--text-red), -2px -2px 0px var(--blue-glow); }
-      96% { text-shadow: -4px 1px 0px var(--text-red), 4px -1px 0px var(--blue-glow); transform: skew(0.8deg); }
-      97% { text-shadow: 3px -2px 0px var(--text-red), -3px 2px 0px var(--blue-glow); transform: skew(-0.5deg); }
-      98% { text-shadow: 0px 0px 0px transparent; }
-      100% { text-shadow: 2px 2px 0px var(--text-red), -2px -2px 0px var(--blue-glow); }
+    /* 진동 및 지지직 오버레이 애니메이션 */
+    @keyframes global-glitch {
+      0% { transform: translate(0); filter: hue-rotate(0deg); }
+      20% { transform: translate(-3px, 2px); filter: invert(10%); }
+      40% { transform: translate(3px, -1px); }
+      60% { transform: translate(-2px, -2px); filter: hue-rotate(90deg); }
+      80% { transform: translate(2px, 1px); }
+      100% { transform: translate(0); }
+    }
+
+    @keyframes blink {
+      from { opacity: 1; }
+      to { opacity: 0.3; }
     }
 
     @media (max-width: 768px) {
@@ -350,10 +373,13 @@
 </head>
 <body>
 
-  <div class="poster-container">
+  <div class="poster-container" id="poster-box">
     <div class="content-wrapper">
       
-      <div class="time-code">REC _00:00:02:02</div>
+      <!-- 실시간 변동 타임코드 -->
+      <div class="time-code" id="rec-time">REC _00:00:00:00</div>
+      
+      <!-- 수정된 한글 타이틀 -->
       <div class="top-slogan">교복을 단정하게</div>
 
       <header>
@@ -362,10 +388,10 @@
 
       <div class="main-grid">
         
-        <!-- 왼쪽: 나폴리탄 괴담 수칙 -->
+        <!-- 왼쪽: 수정된 적용 대상 및 나폴리탄 수칙 -->
         <div class="left-column">
           <section class="info-box">
-            <p><strong>적용 대상:</strong> 본교 재학생 및 교내 출입자</p>
+            <p><strong>적용 대상:</strong> 본교 재학생, 교내 출입자, 및 시선이 느껴지는 존재</p>
             <p><strong>관리 담당:</strong> 학생안전부 및 관제실</p>
           </section>
 
@@ -379,7 +405,7 @@
           </section>
         </div>
 
-        <!-- 오른쪽: CCTV 카메라 및 실시간 분석 -->
+        <!-- 오른쪽: 모니터링 카메라 및 분석 -->
         <div class="right-column">
           <div class="controls">
             <button id="start-btn" class="btn" onclick="startCamera()">감시 시작</button>
@@ -417,6 +443,8 @@
     let model, webcam, maxPredictions;
     let isRunning = false;
     let animationFrameId = null;
+    let timeInterval = null;
+    let secondsElapsed = 0;
 
     const startBtn = document.getElementById("start-btn");
     const stopBtn = document.getElementById("stop-btn");
@@ -425,6 +453,8 @@
     const webcamContainer = document.getElementById("webcam-container");
     const labelContainer = document.getElementById("label-container");
     const topPredictionValue = document.getElementById("top-prediction-value");
+    const recTimeElement = document.getElementById("rec-time");
+    const posterBox = document.getElementById("poster-box");
 
     function showError(message) {
       errorMsg.innerText = message;
@@ -435,6 +465,34 @@
     function clearError() {
       errorMsg.innerText = "";
       errorMsg.style.display = "none";
+    }
+
+    /* 타임코드 카운터 & 44:44:44:44 저주 연출 */
+    function startTimer() {
+      secondsElapsed = 0;
+      recTimeElement.classList.remove("cursed");
+      
+      timeInterval = setInterval(() => {
+        secondsElapsed++;
+        
+        // 10초 이상 작동 시 8개의 모든 숫자가 4로 변하며 붉은색 전환
+        if (secondsElapsed >= 10) {
+          recTimeElement.innerText = "REC _44:44:44:44";
+          recTimeElement.classList.add("cursed");
+        } else {
+          let hrs = String(Math.floor(secondsElapsed / 3600)).padStart(2, '0');
+          let mins = String(Math.floor((secondsElapsed % 3600) / 60)).padStart(2, '0');
+          let secs = String(secondsElapsed % 60).padStart(2, '0');
+          let ms = String(Math.floor(Math.random() * 99)).padStart(2, '0');
+          recTimeElement.innerText = `REC _${hrs}:${mins}:${secs}:${ms}`;
+        }
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (timeInterval) clearInterval(timeInterval);
+      recTimeElement.innerText = "REC _00:00:00:00";
+      recTimeElement.classList.remove("cursed");
     }
 
     async function startCamera() {
@@ -486,6 +544,7 @@
           labelContainer.appendChild(row);
         }
 
+        startTimer();
         loop();
 
       } catch (err) {
@@ -525,13 +584,21 @@
 
       topPredictionValue.innerText = `${highestClass} (${Math.round(highestProb * 100)}%)`;
       
-      // 체육복 감지 시 경고 텍스트 색상 전환
-      if (highestClass.includes("체육복") && highestProb > 0.6) {
+      /* 체육복 감지 시: 화면 암전 + 전체 노이즈 지지직 효과 발동 */
+      if (highestClass.includes("체육복") && highestProb > 0.5) {
+        webcamContainer.classList.add("blackout");
+        posterBox.classList.add("glitch-mode");
         topPredictionValue.style.color = "var(--text-red)";
         topPredictionValue.style.textShadow = "0 0 10px var(--text-red)";
+        statusMsg.innerText = "⚠️ 경고: 미확인 인체 반응 감지! 즉시 이탈하십시오.";
+        statusMsg.style.color = "var(--text-red)";
       } else {
+        webcamContainer.classList.remove("blackout");
+        posterBox.classList.remove("glitch-mode");
         topPredictionValue.style.color = "var(--blue-glow)";
         topPredictionValue.style.textShadow = "0 0 8px var(--blue-glow)";
+        statusMsg.innerText = "● 실시간 모니터링 중";
+        statusMsg.style.color = "var(--blue-glow)";
       }
     }
 
@@ -543,12 +610,16 @@
         animationFrameId = null;
       }
 
+      stopTimer();
+
       if (webcam) {
         webcam.stop();
         webcam = null;
       }
 
       webcamContainer.innerHTML = "";
+      webcamContainer.classList.remove("blackout");
+      posterBox.classList.remove("glitch-mode");
       topPredictionValue.innerText = "-";
       labelContainer.innerHTML = "";
       
@@ -557,6 +628,7 @@
       
       if (!errorMsg.style.display || errorMsg.style.display === "none") {
         statusMsg.innerText = "신호가 단절되었습니다.";
+        statusMsg.style.color = "var(--blue-glow)";
       }
     }
   </script>
